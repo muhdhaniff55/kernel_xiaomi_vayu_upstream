@@ -83,10 +83,9 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	struct cpu_status *i_cpu_stats;
 	struct cpufreq_policy policy;
 	cpumask_var_t limit_mask;
-	const char *reset = "0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0";
 
 	if (touchboost == 0)
-		cp = reset;
+		return 0;
 
 	int ret = 0;
 
@@ -102,10 +101,7 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	if (touchboost == 0)
-		cp = reset;
-	else
-		cp = buf;
+	cp = buf;
 
 	cpumask_clear(limit_mask);
 	for (i = 0; i < ntokens; i += 2) {
@@ -174,10 +170,9 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 	struct cpu_status *i_cpu_stats;
 	struct cpufreq_policy policy;
 	cpumask_var_t limit_mask;
-	const char *reset = "0:4294967295 1:4294967295 2:4294967295 3:4294967295 4:4294967295 5:4294967295 6:4294967295 7:4294967295";
 
 	if (touchboost == 0)
-		cp = reset;
+		return 0;
 
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
@@ -186,10 +181,7 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	if (touchboost == 0)
-		cp = reset;
-	else
-		cp = buf;
+	cp = buf;
 
 	cpumask_clear(limit_mask);
 	for (i = 0; i < ntokens; i += 2) {
