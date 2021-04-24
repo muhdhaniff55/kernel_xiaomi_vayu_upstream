@@ -1946,6 +1946,81 @@ static void netvsc_vf_setup(struct work_struct *w)
 	rtnl_unlock();
 }
 
+/* Find netvsc by VF serial number.
+ * The PCI hyperv controller records the serial number as the slot kobj name.
+ */
+static struct net_device *get_netvsc_byslot(const struct net_device *vf_netdev)
+{
+	struct device *parent = vf_netdev->dev.parent;
+	struct net_device_context *ndev_ctx;
+	struct net_device *ndev;
+	struct pci_dev *pdev;
+	u32 serial;
+
+	if (!parent || !dev_is_pci(parent))
+		return NULL; /* not a PCI device */
+
+	pdev = to_pci_dev(parent);
+	if (!pdev->slot) {
+		netdev_notice(vf_netdev, "no PCI slot information\n");
+		return NULL;
+	}
+
+	if (kstrtou32(pci_slot_name(pdev->slot), 10, &serial)) {
+		netdev_notice(vf_netdev, "Invalid vf serial:%s\n",
+			      pci_slot_name(pdev->slot));
+		return NULL;
+	}
+
+	list_for_each_entry(ndev_ctx, &netvsc_dev_list, list) {
+		if (!ndev_ctx->vf_alloc)
+			continue;
+
+		if (ndev_ctx->vf_serial != serial)
+			continue;
+
+		ndev = hv_get_drvdata(ndev_ctx->device_ctx);
+		if (ndev->addr_len != vf_netdev->addr_len ||
+		    memcmp(ndev->perm_addr, vf_netdev->perm_addr,
+			   ndev->addr_len) != 0)
+			continue;
+
+		return ndev;
+
+	}
+
+	/* Fallback path to check synthetic vf with help of mac addr.
+	 * Because this function can be called before vf_netdev is
+	 * initialized (NETDEV_POST_INIT) when its perm_addr has not been copied
+	 * from dev_addr, also try to match to its dev_addr.
+	 * Note: On Hyper-V and Azure, it's not possible to set a MAC address
+	 * on a VF that matches to the MAC of a unrelated NETVSC device.
+	 */
+	list_for_each_entry(ndev_ctx, &netvsc_dev_list, list) {
+		ndev = hv_get_drvdata(ndev_ctx->device_ctx);
+		if (ether_addr_equal(vf_netdev->perm_addr, ndev->perm_addr) ||
+		    ether_addr_equal(vf_netdev->dev_addr, ndev->perm_addr))
+			return ndev;
+	}
+
+	netdev_notice(vf_netdev,
+		      "no netdev found for vf serial:%u\n", serial);
+	return NULL;
+}
+
+static int netvsc_prepare_bonding(struct net_device *vf_netdev)
+{
+	struct net_device *ndev;
+
+	ndev = get_netvsc_byslot(vf_netdev);
+	if (!ndev)
+		return NOTIFY_DONE;
+
+	/* set slave flag before open to prevent IPv6 addrconf */
+	vf_netdev->flags |= IFF_SLAVE;
+	return NOTIFY_DONE;
+}
+
 static int netvsc_register_vf(struct net_device *vf_netdev)
 {
 	struct net_device *ndev;
