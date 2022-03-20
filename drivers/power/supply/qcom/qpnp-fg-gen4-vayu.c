@@ -209,8 +209,8 @@
 #define MONOTONIC_SOC_v2_OFFSET		0
 #define FIRST_LOG_CURRENT_v2_WORD	471
 #define FIRST_LOG_CURRENT_v2_OFFSET	0
-#define DEFAULT_FFC_TERM_CURRENT	1500
 
+#define DEFAULT_FFC_TERM_CURRENT	1500
 static struct fg_irq_info fg_irqs[FG_GEN4_IRQ_MAX];
 
 /* DT parameters for FG device */
@@ -341,8 +341,8 @@ struct fg_gen4_chip {
 	bool			rslow_low;
 	bool			rapid_soc_dec_en;
 	bool			vbatt_low;
-	bool			soc_scale_mode;
 	bool			chg_term_good;
+	bool			soc_scale_mode;
 	bool			fastcharge_mode_enabled;
 	bool			cold_thermal_support;
 };
@@ -1545,7 +1545,7 @@ static int fg_gen4_adjust_ki_coeff_full_soc(struct fg_gen4_chip *chip,
 						int batt_temp)
 {
 	struct fg_dev *fg = &chip->fg;
-	int rc, ki_coeff_full_soc_norm = 0, ki_coeff_full_soc_low = 0;
+	int rc, ki_coeff_full_soc_norm, ki_coeff_full_soc_low;
 	u8 val;
 
 	if ((batt_temp < 0) ||
@@ -5176,8 +5176,6 @@ static int fg_psy_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_KI_COEFF_CURRENT:
 		pval->intval = chip->dt.ffc_ki_coeff_med_hi_chg_thr_ma;
 		break;
-	case POWER_SUPPLY_PROP_TYPEC_MODE:
-		return -ENODATA;
 	default:
 		pr_err("unsupported property %d\n", psp);
 		rc = -EINVAL;
