@@ -34,6 +34,38 @@
  */
 #define POLL_INT 15
 
+unsigned int __read_mostly cpulimit = 1;
+static int __init read_cpulimit(char *s)
+{
+	if (s) {
+		cpulimit = simple_strtoul(s, NULL, 0);
+		if ( cpulimit > 0 ) {
+			cpulimit = 1;
+		}
+	}
+	return 1;
+}
+__setup("zyc.cpulimit=", read_cpulimit);
+
+static int set_cpulimit(const char *buf, const struct kernel_param *kp)
+{
+	int val;
+	if (sscanf(buf, "%d\n", &val) != 1)
+		return -EINVAL;
+	cpulimit = val;
+	return 0;
+}
+
+static int get_cpulimit(char *buf, const struct kernel_param *kp)
+{
+	return snprintf(buf, PAGE_SIZE, "%d", cpulimit);
+}
+static const struct kernel_param_ops param_ops_cpulimit = {
+	.set = set_cpulimit,
+	.get = get_cpulimit,
+};
+module_param_cb(cpulimit, &param_ops_cpulimit, NULL, 0644);
+
 /* To handle cpufreq min/max request */
 struct cpu_status {
 	unsigned int min;
@@ -53,26 +85,6 @@ static unsigned int aggr_big_nr;
 static unsigned int aggr_top_load;
 
 /*******************************sysfs start************************************/
-static int set_touchboost(const char *buf, const struct kernel_param *kp)
-{
-	int cnt, val;
-
-	cnt = sscanf(buf, "%d\n", &val);
-	if (cnt != 1)
-		return -EINVAL;
-	touchboost = val;
-	return cnt;
-}
-
-static int get_touchboost(char *buf, const struct kernel_param *kp)
-{
-	return snprintf(buf, PAGE_SIZE, "%d", touchboost);
-}
-static const struct kernel_param_ops param_ops_touchboost = {
-	.set = set_touchboost,
-	.get = get_touchboost,
-};
-device_param_cb(touchboost, &param_ops_touchboost, NULL, 0644);
 static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 {
 	int i, j, ntokens = 0;
@@ -81,13 +93,10 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	struct cpu_status *i_cpu_stats;
 	struct cpufreq_policy policy;
 	cpumask_var_t limit_mask;
+	const char *reset = "0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0";
 
-	int ret = 0;
-
-	if (!touchboost) {
-		pr_info("Ignored touchboost event!\n");
-		return ret;
-	}
+	if (cpulimit == 0)
+		cp = reset;
 
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
@@ -96,7 +105,11 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	cp = buf;
+	if (cpulimit == 0)
+		cp = reset;
+	else
+		cp = buf;
+
 	cpumask_clear(limit_mask);
 	for (i = 0; i < ntokens; i += 2) {
 		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
@@ -164,6 +177,10 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 	struct cpu_status *i_cpu_stats;
 	struct cpufreq_policy policy;
 	cpumask_var_t limit_mask;
+	const char *reset = "0:4294967295 1:4294967295 2:4294967295 3:4294967295 4:4294967295 5:4294967295 6:4294967295 7:4294967295";
+
+	if (cpulimit == 0)
+		cp = reset;
 
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
@@ -172,7 +189,11 @@ static int set_cpu_max_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	cp = buf;
+	if (cpulimit == 0)
+		cp = reset;
+	else
+		cp = buf;
+
 	cpumask_clear(limit_mask);
 	for (i = 0; i < ntokens; i += 2) {
 		if (sscanf(cp, "%u:%u", &cpu, &val) != 2)
