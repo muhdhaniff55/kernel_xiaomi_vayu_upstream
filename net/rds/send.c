@@ -1134,8 +1134,9 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 		/* Trigger connection so that its ready for the next retry */
 		if (ret ==  -EAGAIN)
 			rds_conn_connect_if_down(conn);
+	ret = rds_cmsg_send(rs, rm, msg, &allocated_mr, &vct);
+	if (ret)
 		goto out;
-	}
 
 	if (rm->rdma.op_active && !conn->c_trans->xmit_rdma) {
 		printk_ratelimited(KERN_NOTICE "rdma_op %p conn xmit_rdma %p\n",
