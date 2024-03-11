@@ -562,13 +562,6 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
 	struct kioctx *ctx = req->ki_ctx;
 	unsigned long flags;
 
-	/*
-	 * kiocb didn't come from aio or is neither a read nor a write, hence
-	 * ignore it.
-	 */
-	if (!(iocb->ki_flags & IOCB_AIO_RW))
-		return;
-
 	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
 		return;
 
@@ -1469,76 +1462,6 @@ SYSCALL_DEFINE1(io_destroy, aio_context_t, ctx)
 }
 
 static int aio_setup_rw(int rw, struct iocb *iocb, struct iovec **iovec,
-static void aio_remove_iocb(struct aio_kiocb *iocb)
-{
-	struct kioctx *ctx = iocb->ki_ctx;
-	unsigned long flags;
-
-	spin_lock_irqsave(&ctx->ctx_lock, flags);
-	list_del(&iocb->ki_list);
-	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
-}
-
-static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
-{
-	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
-
-	if (!list_empty_careful(&iocb->ki_list))
-		aio_remove_iocb(iocb);
-
-	if (kiocb->ki_flags & IOCB_WRITE) {
-		struct inode *inode = file_inode(kiocb->ki_filp);
-
-		/*
-		 * Tell lockdep we inherited freeze protection from submission
-		 * thread.
-		 */
-		if (S_ISREG(inode->i_mode))
-			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
-		file_end_write(kiocb->ki_filp);
-	}
-
-	iocb->ki_res.res = res;
-	iocb->ki_res.res2 = res2;
-	iocb_put(iocb);
-}
-
-static int aio_prep_rw(struct kiocb *req, const struct iocb *iocb)
-{
-	int ret;
-
-	req->ki_complete = aio_complete_rw;
-	req->private = NULL;
-	req->ki_pos = iocb->aio_offset;
-	req->ki_flags = iocb_flags(req->ki_filp) | IOCB_AIO_RW;
-	if (iocb->aio_flags & IOCB_FLAG_RESFD)
-		req->ki_flags |= IOCB_EVENTFD;
-	req->ki_hint = ki_hint_validate(file_write_hint(req->ki_filp));
-	if (iocb->aio_flags & IOCB_FLAG_IOPRIO) {
-		/*
-		 * If the IOCB_FLAG_IOPRIO flag of aio_flags is set, then
-		 * aio_reqprio is interpreted as an I/O scheduling
-		 * class and priority.
-		 */
-		ret = ioprio_check_cap(iocb->aio_reqprio);
-		if (ret) {
-			pr_debug("aio ioprio check cap error: %d\n", ret);
-			return ret;
-		}
-
-		req->ki_ioprio = iocb->aio_reqprio;
-	} else
-		req->ki_ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_NONE, 0);
-
-	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
-	if (unlikely(ret))
-		return ret;
-
-	req->ki_flags &= ~IOCB_HIPRI; /* no one is going to poll for this I/O */
-	return 0;
-}
-
-static int aio_setup_rw(int rw, const struct iocb *iocb, struct iovec **iovec,
 		bool vectored, bool compat, struct iov_iter *iter)
 {
 	void __user *buf = (void __user *)(uintptr_t)iocb->aio_buf;
