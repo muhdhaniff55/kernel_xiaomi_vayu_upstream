@@ -2,6 +2,8 @@
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 4.14.336 Kernel Configuration
 #
+CONFIG_LD_DEAD_CODE_DATA_ELIMINATION=y
+CONFIG_POLLY_CLANG=y
 CONFIG_MSM_HOTPLUG=y
 CONFIG_SCHED_CASS=y
 CONFIG_ARM64=y
