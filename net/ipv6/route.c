@@ -3259,20 +3259,12 @@ static int ip6_route_multipath_add(struct fib6_config *cfg,
 
 		/* nh->rt6_info is used or freed at this point, reset to NULL*/
 		nh->rt6_info = NULL;
-		err = __ip6_ins_rt(nh->fib6_info, info, extack);
-
 		if (err) {
 			if (replace && nhn)
 				ip6_print_replace_route_err(&rt6_nh_list);
 			err_nh = nh;
 			goto add_errout;
 		}
-		/* save reference to last route successfully inserted */
-		rt_last = nh->fib6_info;
-
-		/* save reference to first route for notification */
-		if (!rt_notif)
-			rt_notif = nh->fib6_info;
 
 		/* Because each route is added like a single route we remove
 		 * these flags after the first nexthop: if there is a collision,
@@ -3313,7 +3305,6 @@ cleanup:
 		if (nh->rt6_info)
 			dst_release_immediate(&nh->rt6_info->dst);
 		kfree(nh->mxc.mx);
-		fib6_info_release(nh->fib6_info);
 		list_del(&nh->next);
 		kfree(nh);
 	}
