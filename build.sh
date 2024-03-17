@@ -45,13 +45,28 @@ compile()
     echo -e ${LGR} "######### Compiling kernel #########${NC}"
     make -j$(nproc --all) \
     O=out \
-    ARCH=${ARCH}\
-    CC="ccache clang" \
-    CLANG_TRIPLE="aarch64-linux-gnu-" \
-    CROSS_COMPILE="aarch64-linux-gnu-" \
-    CROSS_COMPILE_ARM32="arm-linux-gnueabi-" \
-    LLVM=1 \
-    LLVM_IAS=1
+    ARCH=arm64                              \
+    SUBARCH=arm64                           \
+    DTC_EXT=dtc                             \
+    CLANG_TRIPLE=aarch64-linux-gnu-         \
+    CROSS_COMPILE=aarch64-linux-gnu-        \
+    CROSS_COMPILE_ARM32=arm-linux-gnueabi-  \
+    CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+    LD=ld.lld                               \
+    AR=llvm-ar                              \
+    NM=llvm-nm                              \
+    STRIP=llvm-strip                        \
+    OBJCOPY=llvm-objcopy                    \
+    OBJDUMP=llvm-objdump                    \
+    READELF=llvm-readelf                    \
+    HOSTCC=clang                            \
+    HOSTCXX=clang++                         \
+    HOSTAR=llvm-ar                          \
+    HOSTLD=ld.lld                           \
+    LLVM=1                                  \
+    LLVM_IAS=1                              \
+    CC="ccache clang"                       \
+    $1
 }
 
 completion()
