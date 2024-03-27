@@ -2,6 +2,7 @@
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 4.14.336 Kernel Configuration
 #
+CONFIG_SCHED_BORE=y
 CONFIG_MSM_HOTPLUG=y
 # CONFIG_SCHED_CASS is not set
 CONFIG_ARM64=y
