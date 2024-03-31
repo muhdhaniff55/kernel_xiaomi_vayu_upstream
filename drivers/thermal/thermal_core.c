@@ -852,7 +852,6 @@ int thermal_zone_bind_cooling_device(struct thermal_zone_device *tz,
 
 	snprintf(dev->weight_attr_name, sizeof(dev->weight_attr_name),
 		 "cdev%d_weight", dev->id);
-
 	sysfs_attr_init(&dev->weight_attr.attr);
 	dev->weight_attr.attr.name = dev->weight_attr_name;
 	dev->weight_attr.attr.mode = S_IWUSR | S_IRUGO;

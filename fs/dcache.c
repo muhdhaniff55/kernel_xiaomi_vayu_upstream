@@ -701,7 +701,6 @@ static inline bool fast_dput(struct dentry *dentry)
 		}
 		dentry->d_lockref.count--;
 		goto locked;
-
 	}
 
 	/*

@@ -397,8 +397,8 @@ next_group:
 		       flexbg_size);
 
 		for (i = 0; i < flex_gd->count; i++) {
-			ext4_debug(
-			       "adding %s group %u: %u blocks (%u free, %u mdata blocks)\n",
+			printk(KERN_DEBUG "adding %s group %u: %u "
+			       "blocks (%u free)\n",
 			       ext4_bg_has_super(sb, group + i) ? "normal" :
 			       "no-super", group + i,
 			       group_data[i].blocks_count,
@@ -1567,7 +1567,8 @@ exit:
 
 static int ext4_setup_next_flex_gd(struct super_block *sb,
 				    struct ext4_new_flex_group_data *flex_gd,
-				    ext4_fsblk_t n_blocks_count)
+				    ext4_fsblk_t n_blocks_count,
+				    unsigned int flexbg_size)
 {
 	struct ext4_super_block *es = EXT4_SB(sb)->s_es;
 	struct ext4_new_group_data *group_data = flex_gd->groups;

@@ -2,6 +2,8 @@
 # Automatically generated file; DO NOT EDIT.
 # Linux/arm64 4.14.336 Kernel Configuration
 #
+CONFIG_IRQ_SBALANCE=y
+CONFIG_SBALANCE_EXCLUDE_CPUS="3,7"
 CONFIG_SCHED_BORE=y
 CONFIG_MSM_HOTPLUG=y
 # CONFIG_SCHED_CASS is not set
