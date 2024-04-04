@@ -12,12 +12,13 @@ kernel_name="午前Anymore-Kernel-vayu"
 zip_name="$kernel_name-$(date +"%d%m%Y-%H%M").zip"
 TC_DIR=/workspace/
 CLANG_DIR=/workspace/Ubuntu-SSH/clang-19
+GCC64=/workspace/Ubuntu-SSH/gcc64
 export CONFIG_FILE="vayu_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_HOST=rizalbrambe
 export KBUILD_BUILD_USER=t.me
 
-export PATH="$CLANG_DIR/bin:$PATH"
+export PATH="$CLANG_DIR/bin:$PATH:$GCC64/bin:$PATH"
 
 if ! [ -d "$CLANG_DIR" ]; then
     echo "Toolchain not found! Cloning to $CLANG_DIR..."
