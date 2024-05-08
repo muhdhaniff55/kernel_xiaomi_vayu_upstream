@@ -188,14 +188,14 @@ static inline void tcp_event_ack_sent(struct sock *sk, unsigned int pkts,
 }
 
 
-u32 tcp_default_init_rwnd(struct net *net, u32 mss)
+u32 tcp_default_init_rwnd(u32 mss)
 {
 	/* Initial receive window should be twice of TCP_INIT_CWND to
 	 * enable proper sending of new unsent data during fast recovery
 	 * (RFC 3517, Section 4, NextSeg() rule (2)). Further place a
 	 * limit when mss is larger than 1460.
 	 */
-	u32 init_rwnd = net->ipv4.sysctl_tcp_default_init_rwnd;
+	u32 init_rwnd = TCP_INIT_CWND * 2;
 
 	if (mss > 1460)
 		init_rwnd = max((1460 * init_rwnd) / mss, 2U);
@@ -209,7 +209,7 @@ u32 tcp_default_init_rwnd(struct net *net, u32 mss)
  * be a multiple of mss if possible. We assume here that mss >= 1.
  * This MUST be enforced by all callers.
  */
-void tcp_select_initial_window(struct net *net, int __space, __u32 mss,
+void tcp_select_initial_window(int __space, __u32 mss,
 			       __u32 *rcv_wnd, __u32 *window_clamp,
 			       int wscale_ok, __u8 *rcv_wscale,
 			       __u32 init_rcv_wnd)
@@ -252,7 +252,7 @@ void tcp_select_initial_window(struct net *net, int __space, __u32 mss,
 
 	if (mss > (1 << *rcv_wscale)) {
 		if (!init_rcv_wnd) /* Use default unless specified otherwise */
-			init_rcv_wnd = tcp_default_init_rwnd(net, mss);
+			init_rcv_wnd = tcp_default_init_rwnd(mss);
 		*rcv_wnd = min(*rcv_wnd, init_rcv_wnd * mss);
 	}
 
@@ -1707,7 +1707,7 @@ u32 tcp_tso_autosize(const struct sock *sk, unsigned int mss_now,
 {
 	u32 bytes, segs;
 
-	bytes = min(sk->sk_pacing_rate >> sk->sk_pacing_shift,
+	bytes = min(sk->sk_pacing_rate >> 10,
 		    sk->sk_gso_max_size - 1 - MAX_TCP_HEADER);
 
 	/* Goal is to send at least one packet per ms,
@@ -2225,7 +2225,7 @@ static bool tcp_small_queue_check(struct sock *sk, const struct sk_buff *skb,
 {
 	unsigned int limit;
 
-	limit = max(2 * skb->truesize, sk->sk_pacing_rate >> sk->sk_pacing_shift);
+	limit = max(2 * skb->truesize, sk->sk_pacing_rate >> 10);
 	limit = min_t(u32, limit, sysctl_tcp_limit_output_bytes);
 	limit <<= factor;
 
@@ -2439,7 +2439,7 @@ bool tcp_schedule_loss_probe(struct sock *sk, bool advancing_rto)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct tcp_sock *tp = tcp_sk(sk);
-	u32 timeout, timeout_us, rto_delta_us;
+	u32 timeout, rto_delta_us;
 	int early_retrans;
 
 	/* Don't do any loss probe on a Fast Open connection before 3WHS
@@ -2466,12 +2466,11 @@ bool tcp_schedule_loss_probe(struct sock *sk, bool advancing_rto)
 	 * sample is available then probe after TCP_TIMEOUT_INIT.
 	 */
 	if (tp->srtt_us) {
-		timeout_us = tp->srtt_us >> 2;
+		timeout = usecs_to_jiffies(tp->srtt_us >> 2);
 		if (tp->packets_out == 1)
-			timeout_us += tcp_rto_min_us(sk);
+			timeout += TCP_RTO_MIN;
 		else
-			timeout_us += TCP_TIMEOUT_MIN_US;
-		timeout = usecs_to_jiffies(timeout_us);
+			timeout += TCP_TIMEOUT_MIN;
 	} else {
 		timeout = TCP_TIMEOUT_INIT;
 	}
@@ -3388,7 +3387,7 @@ static void tcp_connect_init(struct sock *sk)
 	if (rcv_wnd == 0)
 		rcv_wnd = dst_metric(dst, RTAX_INITRWND);
 
-	tcp_select_initial_window(sock_net(sk), tcp_full_space(sk),
+	tcp_select_initial_window(tcp_full_space(sk),
 				  tp->advmss - (tp->rx_opt.ts_recent_stamp ? tp->tcp_header_len - sizeof(struct tcphdr) : 0),
 				  &tp->rcv_wnd,
 				  &tp->window_clamp,
