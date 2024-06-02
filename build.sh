@@ -1,23 +1,21 @@
 #!/bin/bash
-# Thanks to https://t.me/itsclhex for build script and source
-sudo apt update && sudo -H apt-get install bc python2 ccache binutils-aarch64-linux-gnu cpio
 
 kernel_dir="${PWD}"
 CCACHE=$(command -v ccache)
 objdir="${kernel_dir}/out"
-anykernel=/workspace/Ubuntu-SSH/anykernel
+ANYKERNEL="/workspace/jale/AnyKernel3"
 builddir="${kernel_dir}/build"
 ZIMAGE=$kernel_dir/out/arch/arm64/boot/Image
-kernel_name="午前Anymore-Kernel-vayu"
-zip_name="$kernel_name-$(date +"%d%m%Y-%H%M").zip"
-TC_DIR=/workspace/
-CLANG_DIR=/workspace/Ubuntu-SSH/clang-19
-GCC64_DIR=/workspace/Ubuntu-SSH/gcc64
-GCC32_DIR=/workspace/Ubuntu-SSH/gcc32
+TC_DIR="/workspace/"
+KERNEL_LOG="$KERNEL_DIR/out/log-$(TZ=Asia/Jakarta date +'%H%M').txt"
+MKDTBOIMG="/workspace/jale/libufdt/utils/src/mkdtboimg.py"
+CLANG_DIR="/workspace/jale/clang-19"
+GCC64_DIR="/workspace/jale/gcc64/aarch64--glibc--stable-2024.02-1"
+GCC32_DIR="/workspace/jale/gcc32"
 export CONFIG_FILE="vayu_defconfig"
 export ARCH="arm64"
-export KBUILD_BUILD_HOST=rizalbrambe
-export KBUILD_BUILD_USER=t.me
+export KBUILD_BUILD_HOST="rizalbrambe"
+export KBUILD_BUILD_USER="t.me"
 
 export PATH="$CLANG_DIR/bin:$GCC64_DIR/bin:$GCC32_DIR/bin:$PATH"
 
@@ -88,7 +86,13 @@ completion()
         exit 1
     fi
 }
+
+dtb()
+{
+find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
+}
 make_defconfig
 compile
 completion
+dtb
 cd ${kernel_dir}
