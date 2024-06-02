@@ -66,8 +66,10 @@ compile()
     LLVM=1                                  \
     LLVM_IAS=1                              \
     CC="ccache clang"                       \
-    $1
+    $1	2>&1 | tee "$KERNEL_LOG"
 }
+
+find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
 
 completion()
 {
@@ -86,13 +88,7 @@ completion()
         exit 1
     fi
 }
-
-dtb()
-{
-find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
-}
 make_defconfig
 compile
 completion
-dtb
 cd ${kernel_dir}
