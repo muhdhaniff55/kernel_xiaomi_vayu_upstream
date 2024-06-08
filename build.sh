@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo apt update && sudo -H apt-get install bc python2 ccache binutils-aarch64-linux-gnu cpio
+sudo apt update && sudo -H apt-get install bc python2 ccache binutils-aarch64-linux-gnu cpio neofetch
 
 kernel_dir="${PWD}"
 CCACHE=$(command -v ccache)
@@ -72,9 +72,8 @@ completion()
         mv $anykernel/$zip_name $HOME/$zip_name
         rm -rf $anykernel
         END=$(date +"%s")
-        DIFF=$(($END - $START))
-        curl --upload-file $HOME/$zip_name https://free.keep.sh; echo
-        rm $HOME/$zip_name
+        DIFF=$(($END - $START));
+        curl -T $HOME/$zip_name https://oshi.at/ > m.txt && cat m.txt
         echo -e ${LGR} "############################################"
         echo -e ${LGR} "############# OkThisIsEpic!  ##############"
         echo -e ${LGR} "############################################${NC}"
