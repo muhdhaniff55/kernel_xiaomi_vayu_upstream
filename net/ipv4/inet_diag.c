@@ -53,8 +53,7 @@ static DEFINE_MUTEX(inet_diag_table_mutex);
 static const struct inet_diag_handler *inet_diag_lock_handler(int proto)
 {
 	if (!inet_diag_table[proto])
-		request_module("net-pf-%d-proto-%d-type-%d-%d", PF_NETLINK,
-			       NETLINK_SOCK_DIAG, AF_INET, proto);
+		sock_load_diag_module(AF_INET, proto);
 
 	mutex_lock(&inet_diag_table_mutex);
 	if (!inet_diag_table[proto])
@@ -393,8 +392,10 @@ static int inet_req_diag_fill(struct sock *sk, struct sk_buff *skb,
 	r->idiag_inode	= 0;
 
 	if (net_admin && nla_put_u32(skb, INET_DIAG_MARK,
-				     inet_rsk(reqsk)->ir_mark))
+				     inet_rsk(reqsk)->ir_mark)) {
+		nlmsg_cancel(skb, nlh);
 		return -EMSGSIZE;
+	}
 
 	nlmsg_end(skb, nlh);
 	return 0;
