@@ -94,6 +94,7 @@
 #include <linux/thread_info.h>
 #include <linux/cpufreq_times.h>
 #include <linux/scs.h>
+#include <linux/simple_lmk.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -342,7 +343,7 @@ static void account_kernel_stack(struct task_struct *tsk, int account)
 	}
 }
 
-static void release_task_stack(struct task_struct *tsk)
+void release_task_stack(struct task_struct *tsk)
 {
 	if (WARN_ON(tsk->state != TASK_DEAD))
 		return;  /* Better to leak the stack than to free prematurely */
@@ -952,6 +953,7 @@ static inline void __mmput(struct mm_struct *mm)
 	ksm_exit(mm);
 	khugepaged_exit(mm); /* must run before exit_mmap */
 	exit_mmap(mm);
+	simple_lmk_mm_freed(mm);
 	mm_put_huge_zero_page(mm);
 	set_mm_exe_file(mm, NULL);
 	if (!list_empty(&mm->mmlist)) {

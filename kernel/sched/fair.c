@@ -89,8 +89,8 @@ walt_dec_cfs_rq_stats(struct cfs_rq *cfs_rq, struct task_struct *p) {}
  *
  * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_latency			= 6000000ULL;
-unsigned int normalized_sysctl_sched_latency		= 6000000ULL;
+unsigned int sysctl_sched_latency			= 5000000ULL;
+unsigned int normalized_sysctl_sched_latency		= 5000000ULL;
 
 /*
  * Enable/disable honoring sync flag in energy-aware wakeups.
@@ -119,13 +119,13 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_L
  *
  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_min_granularity		= 750000ULL;
-unsigned int normalized_sysctl_sched_min_granularity	= 750000ULL;
+unsigned int sysctl_sched_min_granularity		= 500000ULL;
+unsigned int normalized_sysctl_sched_min_granularity	= 500000ULL;
 
 /*
  * This value is kept at sysctl_sched_latency/sysctl_sched_min_granularity
  */
-static unsigned int sched_nr_latency = 8;
+static unsigned int sched_nr_latency = 6;
 
 /*
  * After fork, child runs first. If set to 0 (default) then
@@ -181,7 +181,7 @@ int __weak arch_asym_cpu_priority(int cpu)
  *
  * (default: 5 msec, units: microseconds)
  */
-unsigned int sysctl_sched_cfs_bandwidth_slice		= 5000UL;
+unsigned int sysctl_sched_cfs_bandwidth_slice		= 4000UL;
 #endif
 
 /*
@@ -678,7 +678,6 @@ static struct sched_entity *__pick_next_entity(struct sched_entity *se)
 	return rb_entry(next, struct sched_entity, run_node);
 }
 
-#ifdef CONFIG_SCHED_DEBUG
 struct sched_entity *__pick_last_entity(struct cfs_rq *cfs_rq)
 {
 	struct rb_node *last = rb_last(&cfs_rq->tasks_timeline.rb_root);
@@ -715,7 +714,6 @@ int sched_proc_update_handler(struct ctl_table *table, int write,
 
 	return 0;
 }
-#endif
 
 /*
  * delta /= w
@@ -2485,7 +2483,8 @@ void task_numa_fault(int last_cpupid, int mem_node, int pages, int flags)
 	struct numa_group *ng;
 	int priv;
 
-	if (!static_branch_likely(&sched_numa_balancing))
+	if (!IS_ENABLED(CONFIG_NUMA_BALANCING) ||
+	    !static_branch_likely(&sched_numa_balancing))
 		return;
 
 	/* for example, ksmd faulting in a user's mm */
@@ -9225,12 +9224,12 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 	if (env->flags & LBF_IGNORE_PREFERRED_CLUSTER_TASKS &&
 			 !preferred_cluster(cpu_rq(env->dst_cpu)->cluster, p))
 		return 0;
+#endif
 
 	/* Don't detach task if it doesn't fit on the destination */
 	if (env->flags & LBF_IGNORE_BIG_TASKS &&
 		!task_fits_max(p, env->dst_cpu))
 		return 0;
-#endif
 
 	if (task_running(env->src_rq, p)) {
 		schedstat_inc(p->se.statistics.nr_failed_migrations_running);
@@ -12210,7 +12209,8 @@ static void task_tick_fair(struct rq *rq, struct task_struct *curr, int queued)
 		entity_tick(cfs_rq, se, queued);
 	}
 
-	if (static_branch_unlikely(&sched_numa_balancing))
+	if (IS_ENABLED(CONFIG_NUMA_BALANCING) &&
+	    static_branch_unlikely(&sched_numa_balancing))
 		task_tick_numa(rq, curr);
 
 	update_misfit_status(curr, rq);

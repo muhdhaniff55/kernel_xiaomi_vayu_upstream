@@ -136,6 +136,9 @@ static int one_thousand = 1000;
 #ifdef CONFIG_SCHED_WALT
 static int two_million = 2000000;
 #endif
+#ifdef CONFIG_INCREASE_MAXIMUM_SWAPPINESS
+static int max_swappiness = 200;
+#endif
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
 #endif
@@ -325,7 +328,6 @@ static struct ctl_table sysctl_base_table[] = {
 	{ }
 };
 
-#ifdef CONFIG_SCHED_DEBUG
 static int min_sched_granularity_ns = 100000;		/* 100 usecs */
 static int max_sched_granularity_ns = NSEC_PER_SEC;	/* 1 second */
 static int min_wakeup_granularity_ns;			/* 0 usecs */
@@ -334,7 +336,6 @@ static int max_wakeup_granularity_ns = NSEC_PER_SEC;	/* 1 second */
 static int min_sched_tunable_scaling = SCHED_TUNABLESCALING_NONE;
 static int max_sched_tunable_scaling = SCHED_TUNABLESCALING_END-1;
 #endif /* CONFIG_SMP */
-#endif /* CONFIG_SCHED_DEBUG */
 
 #ifdef CONFIG_COMPACTION
 static int min_extfrag_threshold;
@@ -393,6 +394,7 @@ static struct ctl_table kern_table[] = {
 		.extra1		= &zero,
 		.extra2		= &sysctl_sched_group_upmigrate_pct,
 	},
+#if 0
 	{
 		.procname	= "sched_boost",
 		.data		= &sysctl_sched_boost,
@@ -402,6 +404,7 @@ static struct ctl_table kern_table[] = {
 		.extra1		= &neg_three,
 		.extra2		= &three,
 	},
+#endif
 	{
 		.procname	= "sched_conservative_pl",
 		.data		= &sysctl_sched_conservative_pl,
@@ -539,6 +542,7 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec,
 	},
+#ifdef CONFIG_SCHED_DEBUG
 	{
 		.procname	= "sched_nr_migrate",
 		.data		= &sysctl_sched_nr_migrate,
@@ -1484,13 +1488,6 @@ static struct ctl_table vm_table[] = {
 		.proc_handler	= proc_dointvec,
 	},
 	{
-		.procname       = "reap_mem_on_sigkill",
-		.data           = &sysctl_reap_mem_on_sigkill,
-		.maxlen         = sizeof(sysctl_reap_mem_on_sigkill),
-		.mode           = 0644,
-		.proc_handler   = proc_dointvec,
-	},
-	{
 		.procname	= "overcommit_ratio",
 		.data		= &sysctl_overcommit_ratio,
 		.maxlen		= sizeof(sysctl_overcommit_ratio),
@@ -1581,7 +1578,11 @@ static struct ctl_table vm_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= &zero,
+#ifdef CONFIG_INCREASE_MAXIMUM_SWAPPINESS
+		.extra2         = &max_swappiness,
+#else
 		.extra2		= &one_hundred,
+#endif
 	},
 	{
 		.procname       = "want_old_faultaround_pte",

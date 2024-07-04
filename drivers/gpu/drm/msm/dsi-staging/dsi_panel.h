@@ -121,6 +121,10 @@ struct dsi_backlight_config {
 	bool bl_inverted_dbv;
 
 	int en_gpio;
+
+	bool dcs_type_ss_ea;
+	bool dcs_type_ss_eb;
+
 	/* PWM params */
 	struct pwm_device *pwm_bl;
 	bool pwm_enabled;
@@ -216,8 +220,12 @@ struct dsi_panel {
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
+	bool tddi_doubleclick_flag;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
+
+	int hbm_mode;
+	int cabc_mode;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -337,5 +345,9 @@ struct dsi_panel *dsi_panel_ext_bridge_get(struct device *parent,
 int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel);
 
 void dsi_panel_ext_bridge_put(struct dsi_panel *panel);
+
+int dsi_panel_apply_hbm_mode(struct dsi_panel *panel);
+
+int dsi_panel_apply_cabc_mode(struct dsi_panel *panel);
 
 #endif /* _DSI_PANEL_H_ */
