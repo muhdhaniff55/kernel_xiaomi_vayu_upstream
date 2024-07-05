@@ -1113,6 +1113,15 @@ static struct ctl_table ipv4_net_table[] = {
 		.extra1		= &zero,
 		.extra2		= &four,
 	},
+	{
+		.procname       = "tcp_default_init_rwnd",
+		.data           = &init_net.ipv4.sysctl_tcp_default_init_rwnd,
+		.maxlen         = sizeof(int),
+		.mode           = 0644,
+		.proc_handler   = proc_dointvec_minmax,
+		.extra1		= &three,
+		.extra2		= &hundred,
+	},
 	{ }
 };
 
