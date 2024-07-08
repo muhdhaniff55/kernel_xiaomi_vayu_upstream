@@ -66,7 +66,7 @@ compile()
     LLVM=1                                  \
     LLVM_IAS=1                              \
     CC="ccache clang"                       \
-    $1	2>&1 | tee "$KERNEL_LOG"
+    $1
 }
 
 find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
