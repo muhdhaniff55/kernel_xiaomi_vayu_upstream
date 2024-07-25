@@ -9,19 +9,19 @@ ZIMAGE=$kernel_dir/out/arch/arm64/boot/Image
 TC_DIR="/workspace/"
 KERNEL_LOG="$KERNEL_DIR/out/log-$(TZ=Asia/Jakarta date +'%H%M').txt"
 MKDTBOIMG="/workspace/jale/libufdt/utils/src/mkdtboimg.py"
-CLANG_DIR="/workspace/jale/clang-18"
+CLANG_DIR="/workspace/jale/clang/clang-r530567"
 GCC64_DIR="/workspace/jale/gcc64/aarch64--glibc--stable-2024.02-1"
 GCC32_DIR="/workspace/jale/gcc32"
 export CONFIG_FILE="vayu_defconfig"
 export ARCH="arm64"
-export KBUILD_BUILD_HOST="rizalbrambe"
+export KBUILD_BUILD_HOST="AnymoreProject"
 export KBUILD_BUILD_USER="t.me"
 
 export PATH="$CLANG_DIR/bin:$GCC64_DIR/bin:$GCC32_DIR/bin:$PATH"
 
 if ! [ -d "$CLANG_DIR" ]; then
     echo "Toolchain not found! Cloning to $CLANG_DIR..."
-    if ! git clone -q --depth=1 --single-branch https://gitlab.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r510928.git -b 14.0 $TC_DIR; then
+    if ! git clone -q --depth=1 --single-branch https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/ -b master $TC_DIR; then
         echo "Cloning failed! Aborting..."
         exit 1
     fi
