@@ -9,7 +9,7 @@ ZIMAGE=$kernel_dir/out/arch/arm64/boot/Image
 TC_DIR="/workspace/"
 KERNEL_LOG="$KERNEL_DIR/out/log-$(TZ=Asia/Jakarta date +'%H%M').txt"
 MKDTBOIMG="/workspace/jale/libufdt/utils/src/mkdtboimg.py"
-CLANG_DIR="/workspace/jale/clang-19"
+CLANG_DIR="/workspace/jale/clang-20"
 GCC64_DIR="/workspace/jale/gcc64/aarch64--glibc--stable-2024.02-1"
 GCC32_DIR="/workspace/jale/gcc32"
 export CONFIG_FILE="vayu_defconfig"
@@ -68,9 +68,11 @@ compile()
     CC="ccache clang"                       \
     $1
 }
-
-find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
-
+sdk()
+{
+    python3 $MKDTBOIMG create $ANYKERNEL/dtbo.img --page_size=4096 out/arch/arm64/boot/dts/qcom/vayu-sm8150-overlay.dtbo
+    find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $ANYKERNEL/dtb
+}
 completion()
 {
     cd ${objdir}
@@ -90,5 +92,6 @@ completion()
 }
 make_defconfig
 compile
+sdk
 completion
 cd ${kernel_dir}
