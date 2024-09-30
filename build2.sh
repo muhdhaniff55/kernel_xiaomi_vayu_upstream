@@ -8,7 +8,7 @@ builddir="${kernel_dir}/build"
 ZIMAGE=$kernel_dir/out/arch/arm64/boot/Image
 kernel_name="AnymoreProject_vayu_"
 zip_name="$kernel_name$(date +"%Y%m%d").zip"
-CLANG_DIR=${kernel_dir}/tc/clang
+CLANG_DIR=${kernel_dir}/toolchain
 export CONFIG_FILE="vayu_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_HOST="AnymoreProject"
@@ -65,7 +65,11 @@ compile()
     $1
 
 }
-
+sdk()
+{
+    python3 mkdtoimg create $anykernel/dtbo.img --page_size=4096 out/arch/arm64/boot/dts/qcom/vayu-sm8150-overlay.dtbo
+    find out/arch/arm64/boot/dts/qcom -name 'sm8150-v2*.dtb' -exec cat {} + > $anykernel/dtb
+}
 completion()
 {
     cd ${objdir}
@@ -73,7 +77,7 @@ completion()
     COMPILED_DTBO=arch/arm64/boot/dtbo.img
     if [[ -f ${COMPILED_IMAGE} && ${COMPILED_DTBO} ]]; then
 
-        git clone -q https://github.com/GXC2356/AnyKernel3.git -b master $anykernel
+        git clone -q https://github.com/muhdhaniff55/AnyKernel3.git -b anothermaster $anykernel
 
         mv -f $ZIMAGE ${COMPILED_DTBO} $anykernel
 
@@ -93,5 +97,6 @@ completion()
 }
 make_defconfig
 compile
+sdk
 completion
 cd ${kernel_dir}
